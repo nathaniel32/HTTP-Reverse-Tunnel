@@ -1,6 +1,6 @@
 {
-    "id": "com.threedmedico.ollamapython",
-    "title": "Ollama Python",
+    "id": "com.threedmedico.proxypython",
+    "title": "Proxy Python",
     "version": "0.0.1",
     "healthCheckPath": "/health",
     "httpPort": 8080,
