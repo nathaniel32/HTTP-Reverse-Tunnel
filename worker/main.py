@@ -181,10 +181,21 @@ class ProxyWorker:
 
 # Main entry point
 if __name__ == "__main__":
-    config = WorkerConfig(
-        target_api_url="http://localhost:11434",
-        proxy_server_url="ws://localhost:8080/worker"
-    )
+    import argparse
+    parser = argparse.ArgumentParser(description="Worker")
+    parser.add_argument("--server-url", type=str)
+    parser.add_argument("--target-url", type=str)
+    args = parser.parse_args()
+
+    config = WorkerConfig()
+
+    if args.server_url:
+        config.proxy_server_url = args.server_url
+    if args.target_url:
+        config.target_api = args.target_url
+
+    logging.info(f"Proxy Server: {config.proxy_server_url}")
+    logging.info(f"Target Server: {config.target_api_url}")
     
     worker = ProxyWorker(config)
     
