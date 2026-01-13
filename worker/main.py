@@ -13,7 +13,6 @@ from common.models import MessageType, ProxyRequest, ResponseStart, ResponseChun
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class RequestHandler:
     def __init__(self, config: WorkerConfig):
         self.config = config
