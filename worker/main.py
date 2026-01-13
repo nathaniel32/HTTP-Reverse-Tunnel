@@ -15,8 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 class RequestHandler:
-    """Handles HTTP requests to target API"""
-    
     def __init__(self, config: WorkerConfig):
         self.config = config
     
@@ -109,8 +107,6 @@ class RequestHandler:
 
 
 class ProxyWorker:
-    """Worker that connects to proxy server and processes requests"""
-    
     def __init__(self, config: WorkerConfig):
         self.config = config
         self.handler = RequestHandler(config)
@@ -118,7 +114,6 @@ class ProxyWorker:
         self.ssl_context = ssl.create_default_context(cafile=certifi.where()) if config.proxy_server_url.startswith("wss://") else None
     
     async def start(self):
-        """Start worker and maintain connection"""
         self.running = True
         logger.info("Starting worker...")
         logger.info(f"Configuration: {self.config.model_dump()}")
@@ -177,12 +172,9 @@ class ProxyWorker:
                     logger.error("Failed to send error message back")
     
     def stop(self):
-        """Stop worker"""
         self.running = False
         logger.info("Worker stopping...")
 
-
-# Main entry point
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Worker")

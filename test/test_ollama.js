@@ -1,7 +1,5 @@
-// Test Ollama API directly
 const BASE_URL = 'http://localhost:8080';
 
-// Helper function to make requests
 async function ollamaRequest(path, options = {}) {
     const url = `${BASE_URL}${path}`;
     const headers = {
@@ -131,8 +129,7 @@ async function testShowModel() {
     console.log(`- Quantization: ${data.details?.quantization_level || 'N/A'}`);
 }
 
-// Test 6: Embeddings
-// Test 6: Embeddings (Optional - skip if not supported)
+// Test 6: Embeddings (Optional)
 async function testEmbeddings() {
     console.log('\nTest 6: Embeddings');
     try {
@@ -150,7 +147,6 @@ async function testEmbeddings() {
         console.log('Skipped: Model does not support embeddings');
     }
 }
-
 
 // Test 7: Multiple Concurrent Requests
 async function testConcurrent() {

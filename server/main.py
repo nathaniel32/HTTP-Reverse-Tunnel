@@ -11,21 +11,16 @@ from common.models import MessageType, HTTPMethod, ProxyRequest, ResponseStart, 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-class WorkerManager:
-    """Manages connected workers"""
-    
+class WorkerManager:    
     def __init__(self):
         self.workers: Dict[str, WebSocket] = {}
         self.pending_requests: Dict[str, asyncio.Queue] = {}
     
     def add_worker(self, worker_id: str, websocket: WebSocket):
-        """Add a new worker"""
         self.workers[worker_id] = websocket
         logger.info(f"Worker {worker_id} connected. Total workers: {len(self.workers)}")
     
     def remove_worker(self, worker_id: str):
-        """Remove a worker"""
         if worker_id in self.workers:
             del self.workers[worker_id]
             logger.info(f"Worker {worker_id} removed. Total workers: {len(self.workers)}")
@@ -62,10 +57,7 @@ class WorkerManager:
     def pending_count(self) -> int:
         return len(self.pending_requests)
 
-
-class ProxyServer:
-    """Main proxy server class"""
-    
+class ProxyServer:    
     def __init__(self, config: ProxyConfig):
         self.config = config
         self.app = FastAPI(title=config.title)
@@ -73,13 +65,11 @@ class ProxyServer:
         self._setup_routes()
     
     def _setup_routes(self):
-        """Setup FastAPI routes"""
         self.app.get("/health", response_model=HealthResponse)(self.health)
         self.app.websocket("/worker")(self.worker_endpoint)
         self.app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])(self.proxy_request)
     
     async def worker_endpoint(self, websocket: WebSocket):
-        """WebSocket endpoint for workers"""
         await websocket.accept()
         worker_id = str(uuid.uuid4())
         self.manager.add_worker(worker_id, websocket)
@@ -157,7 +147,6 @@ class ProxyServer:
             raise HTTPException(status_code=500, detail=str(e))
     
     async def _stream_response(self, request_id: str, queue: asyncio.Queue):
-        """Stream response chunks"""
         try:
             while True:
                 message = await asyncio.wait_for(
@@ -184,7 +173,6 @@ class ProxyServer:
             self.manager.cleanup_request(request_id)
     
     async def health(self):
-        """Health check endpoint"""
         return HealthResponse(
             status="healthy",
             workers=self.manager.worker_count,
