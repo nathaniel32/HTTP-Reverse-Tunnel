@@ -1,5 +1,5 @@
 // Test Ollama API directly
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://localhost:8080';
 
 // Helper function to make requests
 async function ollamaRequest(path, options = {}) {
