@@ -74,9 +74,9 @@ class ProxyServer:
     
     def _setup_routes(self):
         """Setup FastAPI routes"""
+        self.app.get("/health", response_model=HealthResponse)(self.health)
         self.app.websocket("/worker")(self.worker_endpoint)
         self.app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])(self.proxy_request)
-        self.app.get("/health", response_model=HealthResponse)(self.health)
     
     async def worker_endpoint(self, websocket: WebSocket):
         """WebSocket endpoint for workers"""
