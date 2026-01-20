@@ -7,10 +7,7 @@ import logging
 from typing import List, Dict, Optional
 from datetime import datetime
 from server.config import ProxyConfig
-from common.models import (
-    MessageType, HTTPMethod, ProxyRequest, ResponseStart, 
-    ResponseChunk, ResponseEnd, ErrorMessage, HealthResponse
-)
+from common.models import MessageType, HTTPMethod, ProxyRequest, ResponseStart, ResponseChunk, ErrorMessage, HealthResponse
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -253,9 +250,4 @@ app = server.app
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        app, 
-        host="0.0.0.0", 
-        port=8080,
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8080, log_level="info")
