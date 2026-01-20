@@ -1,19 +1,19 @@
 ## Deploy Server
 
 ```
-docker build -t nathaniels32/ollama-proxy-python:latest .
+docker build -t nathaniels32/reverse-proxy-tunnel:latest .
 ```
 
 ```
-docker push nathaniels32/ollama-proxy-python:latest
+docker push nathaniels32/reverse-proxy-tunnel:latest
 ```
 
 ```
-cloudron install --image nathaniels32/ollama-proxy-python:latest
+cloudron install --image nathaniels32/reverse-proxy-tunnel:latest
 ```
 
 ```
-ollama-proxy-python.3d-medico.com
+reverse-proxy-tunnel.3d-medico.com
 ```
 
 ## Run Worker in IOS
