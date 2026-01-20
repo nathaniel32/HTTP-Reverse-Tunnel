@@ -1,3 +1,3 @@
-start cmd /k run.bat
+start run.bat
 TIMEOUT /t 3
-start cmd /k python -m worker.main
+start python -m worker.main

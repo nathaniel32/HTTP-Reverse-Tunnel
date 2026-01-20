@@ -1,1 +1,1 @@
-start cmd /k uvicorn server.main:app --host 0.0.0.0 --port 8080
+start uvicorn server.main:app --host 0.0.0.0 --port 8080

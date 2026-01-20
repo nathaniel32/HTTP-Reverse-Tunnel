@@ -111,26 +111,6 @@ class ProxyServer:
             "/{path:path}", 
             methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]
         )(self.proxy_request)
-    
-    async def worker_endpoint(self, websocket: WebSocket):
-        """WebSocket endpoint for worker connections"""
-        await websocket.accept()
-        await self.manager.add_worker(websocket)
-        
-        try:
-            while True:
-                data = await websocket.receive_text()
-                message_dict = json.loads(data)
-                await self.manager.handle_worker_message(message_dict)
-                        
-        except WebSocketDisconnect:
-            logger.info("Worker disconnected normally")
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON from worker: {e}")
-        except Exception as e:
-            logger.error(f"Worker error: {e}", exc_info=True)
-        finally:
-            await self.manager.remove_worker(websocket)
 
     def _verify_api_key(self, authorization: Optional[str] = None):
         """Verify Bearer token, raise AuthenticationError if invalid"""
@@ -149,6 +129,32 @@ class ProxyServer:
             logger.warning(f"Invalid API key attempt: {token[:8]}...")
             raise AuthenticationError("Invalid API key")
     
+    async def worker_endpoint(self, websocket: WebSocket, authorization: Optional[str] = Header(None)):
+        """WebSocket endpoint for worker connections"""
+        try:
+            self._verify_api_key(authorization)
+        except AuthenticationError as e:
+            await websocket.close(code=1008, reason=str(e))  # Policy Violation
+            return
+        
+        await websocket.accept()
+        await self.manager.add_worker(websocket)
+        
+        try:
+            while True:
+                data = await websocket.receive_text()
+                message_dict = json.loads(data)
+                await self.manager.handle_worker_message(message_dict)
+                        
+        except WebSocketDisconnect:
+            logger.info("Worker disconnected normally")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON from worker: {e}")
+        except Exception as e:
+            logger.error(f"Worker error: {e}", exc_info=True)
+        finally:
+            await self.manager.remove_worker(websocket)
+
     async def proxy_request(self, request: Request, path: str, authorization: Optional[str] = Header(None)):
         """Proxy HTTP requests to workers with streaming support"""
         
@@ -275,7 +281,7 @@ class ProxyServer:
 
 
 # Initialize server
-config = ProxyConfig()
+config = ProxyConfig(api_key="123")
 server = ProxyServer(config)
 app = server.app
 
