@@ -175,20 +175,6 @@ class ProxyWorker:
         logger.info("Worker stopping...")
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Worker")
-    parser.add_argument("--server-url", type=str)
-    parser.add_argument("--target-hostname", type=str)
-    parser.add_argument("--server-api-key", type=str)
-    args = parser.parse_args()
-
-    if args.server_url:
-        worker_config.proxy_server_url = args.server_url
-    if args.target_hostname:
-        worker_config.target_hostname = args.target_hostname
-    if args.server_api_key:
-        worker_config.api_key = args.server_api_key
-
     logging.info(f"Proxy Server: {worker_config.proxy_server_url}")
     logging.info(f"Target Hostname: {worker_config.target_hostname}")
     logging.info(f"API Key: {worker_config.api_key}")
