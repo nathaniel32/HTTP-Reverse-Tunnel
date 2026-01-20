@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException, Header
+from fastapi.responses import StreamingResponse, JSONResponse
 import asyncio
 import json
 import uuid
@@ -92,6 +92,10 @@ class WorkerManager:
         return len(self.pending_requests)
 
 
+class AuthenticationError(Exception):
+    """Custom exception untuk authentication errors"""
+    pass
+
 class ProxyServer:    
     def __init__(self, config: ProxyConfig):
         self.config = config
@@ -127,9 +131,37 @@ class ProxyServer:
             logger.error(f"Worker error: {e}", exc_info=True)
         finally:
             await self.manager.remove_worker(websocket)
+
+    def _verify_api_key(self, authorization: Optional[str] = None):
+        """Verify Bearer token, raise AuthenticationError if invalid"""
+        # Skip if no API key configured
+        if self.config.api_key is None:
+            return
+        
+        if not authorization:
+            raise AuthenticationError("Missing authorization header")
+        
+        if not authorization.startswith("Bearer "):
+            raise AuthenticationError("Invalid authorization format. Use: Bearer <token>")
+        
+        token = authorization[7:]  # Remove "Bearer " prefix
+        if token != self.config.api_key:
+            logger.warning(f"Invalid API key attempt: {token[:8]}...")
+            raise AuthenticationError("Invalid API key")
     
-    async def proxy_request(self, request: Request, path: str):
+    async def proxy_request(self, request: Request, path: str, authorization: Optional[str] = Header(None)):
         """Proxy HTTP requests to workers with streaming support"""
+        
+        
+        try:
+            self._verify_api_key(authorization)
+        except AuthenticationError as e:
+            return JSONResponse(
+                status_code=401,
+                content={"error": str(e)},
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        
         request_id = str(uuid.uuid4())
         worker: Optional[WebSocket] = None
         
