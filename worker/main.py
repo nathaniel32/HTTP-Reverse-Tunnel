@@ -7,7 +7,7 @@ import logging
 import ssl
 import certifi
 from typing import AsyncGenerator
-from worker.config import WorkerConfig
+from worker.config import WorkerConfig, worker_config
 from common.models import MessageType, ProxyRequest, ResponseStart, ResponseChunk, ResponseEnd, ErrorMessage
 
 logging.basicConfig(level=logging.INFO)
@@ -182,20 +182,18 @@ if __name__ == "__main__":
     parser.add_argument("--server-api-key", type=str)
     args = parser.parse_args()
 
-    config = WorkerConfig()
-
     if args.server_url:
-        config.proxy_server_url = args.server_url
+        worker_config.proxy_server_url = args.server_url
     if args.target_hostname:
-        config.target_hostname = args.target_hostname
+        worker_config.target_hostname = args.target_hostname
     if args.server_api_key:
-        config.api_key = args.server_api_key
+        worker_config.api_key = args.server_api_key
 
-    logging.info(f"Proxy Server: {config.proxy_server_url}")
-    logging.info(f"Target Hostname: {config.target_hostname}")
-    logging.info(f"API Key: {config.api_key}")
+    logging.info(f"Proxy Server: {worker_config.proxy_server_url}")
+    logging.info(f"Target Hostname: {worker_config.target_hostname}")
+    logging.info(f"API Key: {worker_config.api_key}")
     
-    worker = ProxyWorker(config)
+    worker = ProxyWorker(worker_config)
     
     try:
         asyncio.run(worker.start())

@@ -7,3 +7,5 @@ class WorkerConfig(BaseModel):
     reconnect_delay: int = Field(default=5, description="Delay in seconds before reconnecting")
     request_timeout: float = Field(default=30.0, description="Request timeout in seconds")
     api_key: Optional[str] = Field(default=None, description="API key for authentication (optional)")
+
+worker_config = WorkerConfig()

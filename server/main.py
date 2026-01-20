@@ -6,7 +6,7 @@ import uuid
 import logging
 from typing import List, Dict, Optional
 from datetime import datetime
-from server.config import ProxyConfig
+from server.config import ProxyConfig, server_config
 from common.models import MessageType, HTTPMethod, ProxyRequest, ResponseStart, ResponseChunk, ErrorMessage, HealthResponse
 
 logging.basicConfig(level=logging.INFO)
@@ -281,8 +281,7 @@ class ProxyServer:
 
 
 # Initialize server
-config = ProxyConfig()
-server = ProxyServer(config)
+server = ProxyServer(server_config)
 app = server.app
 
 
