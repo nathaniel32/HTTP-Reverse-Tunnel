@@ -4,10 +4,12 @@ import asyncio
 import json
 import uuid
 import logging
+import base64
 from typing import List, Dict, Optional
 from datetime import datetime
 from server.config import ProxyConfig, server_config
 from common.models import MessageType, HTTPMethod, ProxyRequest, ResponseStart, ResponseData, ErrorMessage, HealthResponse
+from common.protocol import WebSocketProtocol
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -101,6 +103,7 @@ class ProxyServer:
         self.config = config
         self.app = FastAPI(title=config.title)
         self.manager = WorkerManager()
+        self.protocol = WebSocketProtocol(chunk_size=config.chunk_size)
         self._setup_routes()
     
     def _setup_routes(self):
@@ -142,8 +145,7 @@ class ProxyServer:
         
         try:
             while True:
-                data = await websocket.receive_text()
-                message_dict = json.loads(data)
+                message_dict = await self.protocol.receive_message(websocket)
                 await self.manager.handle_worker_message(message_dict)
                         
         except WebSocketDisconnect:
@@ -192,7 +194,7 @@ class ProxyServer:
             )
             
             # Send to worker
-            await worker.send_text(proxy_req.model_dump_json())
+            await self.protocol.send_message(worker, proxy_req.model_dump())
             logger.info(f"Request {request_id} → worker: {request.method} /{path}")
             
             # Wait for response start
@@ -250,7 +252,10 @@ class ProxyServer:
                 
                 if msg_type == MessageType.RESPONSE_DATA:
                     data_msg = ResponseData(**message)
-                    yield data_msg.data.encode('utf-8')
+                    try:
+                        yield base64.b64decode(data_msg.data)
+                    except Exception as e:
+                        logger.error(f"Error decoding base64 data for {request_id}: {e}")
                     
                 elif msg_type == MessageType.RESPONSE_END:
                     logger.info(f"Stream completed for {request_id}")

@@ -6,6 +6,7 @@ class WorkerConfig(BaseModel):
     target_hostname: str
     reconnect_delay: int
     request_timeout: float
+    chunk_size: int
     api_key: Optional[str]
 
 
@@ -21,6 +22,7 @@ worker_config = WorkerConfig(
     target_hostname=args.target_hostname,
     reconnect_delay=5,      # Delay in seconds before reconnecting
     request_timeout=30.0,   # Request timeout in seconds
+    chunk_size=65536,
     api_key=None            # server api key
 )
 

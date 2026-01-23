@@ -6,9 +6,11 @@ import httpx
 import logging
 import ssl
 import certifi
+import base64
 from typing import AsyncGenerator
 from worker.config import WorkerConfig, worker_config
 from common.models import MessageType, ProxyRequest, ResponseStart, ResponseData, ResponseEnd, ErrorMessage
+from common.protocol import WebSocketProtocol
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -77,10 +79,12 @@ class RequestHandler:
                     ).model_dump()
                     
                     # Stream data
-                    async for data in response.aiter_text():
+                    async for data in response.aiter_bytes():
+                        # Base64 encode for safe transport
+                        b64_data = base64.b64encode(data).decode('utf-8')
                         yield ResponseData(
                             request_id=proxy_req.request_id,
-                            data=data
+                            data=b64_data
                         ).model_dump()
                     
                     # Send response end
@@ -111,6 +115,7 @@ class ProxyWorker:
         self.handler = RequestHandler(config)
         self.running = False
         self.ssl_context = ssl.create_default_context(cafile=certifi.where()) if config.proxy_server_url.startswith("wss://") else None
+        self.protocol = WebSocketProtocol(chunk_size=config.chunk_size)
     
     async def start(self):
         self.running = True
@@ -135,38 +140,33 @@ class ProxyWorker:
             logger.info(f"Connected to proxy server at {self.config.proxy_server_url}")
             logger.info(f"Forwarding requests to {self.config.target_hostname}")
             
-            async for message in websocket:
-                await self._handle_message(websocket, message)
+            while True:
+                try:
+                    message_dict = await self.protocol.receive_message(websocket)
+                    await self._handle_message(websocket, message_dict)
+                except websockets.exceptions.ConnectionClosed:
+                    logger.info("Connection closed by server")
+                    break
     
-    async def _handle_message(self, websocket: ClientProtocol, message: str):
+    async def _handle_message(self, websocket: ClientProtocol, request_data: dict):
         """Handle incoming message from proxy server"""
         try:
-            request_data = json.loads(message)
-            
             if request_data.get("type") == MessageType.REQUEST:
                 async for response_part in self.handler.process(request_data):
-                    await websocket.send(json.dumps(response_part))
+                    await self.protocol.send_message(websocket, response_part)
                 
                 logger.info(f"Response completed for request {request_data.get('request_id')}")
                 
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON message: {e}")
         except Exception as e:
             logger.error(f"Error handling message: {e}")
             # Try to send error back if we have request_id
-            request_data = {}
-            try:
-                request_data = json.loads(message)
-            except:
-                pass
-                
             if "request_id" in request_data:
                 error_msg = ErrorMessage(
                     request_id=request_data["request_id"],
                     error=f"Message handling error: {str(e)}"
                 )
                 try:
-                    await websocket.send(error_msg.model_dump_json())
+                    await self.protocol.send_message(websocket, error_msg.model_dump())
                 except:
                     logger.error("Failed to send error message back")
     
