@@ -2,3 +2,4 @@ pydantic
 websockets
 httpx
 certifi
+fastapi
